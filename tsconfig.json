@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "outDir": "dist",
+    "alwaysStrict": false,
+    "esModuleInterop": true,
+    "lib": ["es2018"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "jsx": "react",
+		"declaration": true,
+		"pretty": true,
+		"newLine": "lf",
+    "stripInternal": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": true,
+		"noEmitOnError": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "strict": false,
+    "target": "es2018",
+    "typeRoots": ["./src/types", "node_modules/@types"]
+  },
+  "include": ["./src/**/*.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.test.ts"]
+}
