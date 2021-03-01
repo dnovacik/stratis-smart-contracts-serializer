@@ -1,18 +1,6 @@
-import { utils, ValueTypes, isArrayOfBytes, Types, BasicTypes, ArrayTypes } from './utils'
-
-const MAX_SIZE = 56
-const OFFSET_SHORT = 0x80
-const OFFSET_LONG = 0xb7
-const OFFSET_SHORT_LIST = 0xc0
-const OFFSET_LONG_LIST = 0xf7
-
-interface Serialize {
-  (b: boolean | number | string | bigint | object | Array<ValueTypes>): Buffer
-}
-
-interface Deserialize {
-  (b: Buffer, type: Types): ValueTypes
-}
+import { ValueTypes, Types, BasicTypes, ArrayTypes, Deserialize, Serialize } from './models'
+import { isArrayOfBytes } from './utils'
+import { encodeValue, encodeValueArray } from './encoder'
 
 export const serialize: Serialize = (b: ValueTypes): Buffer => {
   if (Array.isArray(b)) {
@@ -150,93 +138,7 @@ const serializeArray = (array: Array<ValueTypes>): Buffer => {
 }
 
 const deserializeArray = <T>(buffer: Buffer): Array<T> => {
+  //TODO
   // if (isArrayOfBytes)
   return []
-}
-
-const encodeValue = (buffer: Buffer): Buffer => {
-  if (utils.buffer.isNullOrZeroLength(buffer)) {
-    return Buffer.from([OFFSET_SHORT])
-  }
-
-  if (utils.buffer.isSingleZero(buffer) || utils.buffer.isSingleLessThanOffsetShort(buffer)) {
-    return buffer
-  }
-
-  if (buffer.length < MAX_SIZE) {
-    const length = OFFSET_SHORT + buffer.length
-    const result = Buffer.alloc(buffer.length + 1)
-
-    populateBuffer(buffer, result, 1)
-
-    return setFirst(result, length)
-  } else {
-    const byteLength = utils.buffer.byteNumShifted(buffer)
-    const length = buffer.length + 1 + byteLength
-    const lenBytes = populateLenBytes(buffer.length, byteLength)
-    const result = Buffer.alloc(length)
-
-    populateBuffer(buffer, result, 1 + byteLength)
-    populateBuffer(lenBytes, result, lenBytes.length)
-
-    return setFirst(result, OFFSET_LONG + byteLength)
-  }
-}
-
-const encodeValueArray = (array: Array<Buffer> | null): Buffer => {
-  if (!array) {
-    return Buffer.from([OFFSET_SHORT_LIST])
-  }
-
-  const fullLength = array.reduce((a, b) => a + b.length, 0)
-  const byteLength = array.reduce((a, b) => a + utils.buffer.byteNumShifted(b), 0)
-
-  let { result, offset } = getEncodeArrayData(fullLength, byteLength)
-
-  array.forEach(item => {
-    item.copy(result, offset)
-    offset += item.length
-  })
-
-  return result
-}
-
-const populateBuffer = (source: Buffer, target: Buffer, offset: number): void => {
-  source.copy(target, offset)
-}
-
-const setFirst = (buffer: Buffer, first: number): Buffer => {
-  buffer[0] = first
-
-  return buffer
-}
-
-const populateLenBytes = (sourceLength: number, byteNum: number): Buffer => {
-  const buffer = Buffer.alloc(byteNum)
-
-  for (let i = 0; i < byteNum; ++i) {
-    buffer[byteNum - 1 - i] = (sourceLength >> (8 * i))
-  }
-
-  return buffer
-}
-
-const getEncodeArrayData = (length: number, byteLength: number): { result: Buffer, offset: number } => {
-  if (length < MAX_SIZE) {
-    const buffer = Buffer.alloc(length + 1)
-
-    return {
-      result: setFirst(buffer, OFFSET_SHORT_LIST + length),
-      offset: 1
-    }
-  } else {
-    const lenBytes = populateLenBytes(length, byteLength)
-    const buffer = Buffer.alloc(1 + lenBytes.length + length)
-    populateBuffer(lenBytes, buffer, 1)
-
-    return {
-      result: setFirst(buffer, OFFSET_LONG_LIST + byteLength),
-      offset: lenBytes.length + 1
-    }
-  }
 }

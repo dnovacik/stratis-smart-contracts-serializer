@@ -1,21 +1,4 @@
-export type ValueTypes = string | number | boolean | bigint | object
-export type Types = BasicTypes | ArrayTypes
-
-export enum BasicTypes {
-  CHAR = 'char',
-  STRING = 'string',
-  NUMBER = 'number',
-  BOOLEAN = 'boolean',
-  BIGINT = 'bigint',
-  OBJECT = 'object',
-}
-
-export enum ArrayTypes {
-  BYTES = 'byteArray',
-  NUMBERS = 'numberArray',
-  STRINGS = 'stringArray',
-  CHARS = 'stringArray'
-}
+import { MAX_SIZE, OFFSET_LONG, OFFSET_LONG_LIST, OFFSET_SHORT, OFFSET_SHORT_LIST } from './constants'
 
 const isNullOrZeroLength = (buffer: Buffer): boolean => {
   return buffer === null || buffer.length == 0
@@ -41,6 +24,50 @@ const byteNumShifted = (buffer: Buffer): number => {
   return byteNum
 }
 
+const populateBuffer = (source: Buffer, target: Buffer, offset: number): void => {
+  source.copy(target, offset)
+}
+
+const setFirst = (buffer: Buffer, first: number): Buffer => {
+  buffer[0] = first
+
+  return buffer
+}
+
+const populateLenBytes = (sourceLength: number, byteNum: number): Buffer => {
+  const buffer = Buffer.alloc(byteNum)
+
+  for (let i = 0; i < byteNum; ++i) {
+    buffer[byteNum - 1 - i] = (sourceLength >> (8 * i))
+  }
+
+  return buffer
+}
+
+const isBiggerThan55Bytes = (buffer: Buffer, currentPosition: number): boolean => {
+  return buffer[currentPosition] > OFFSET_LONG_LIST
+}
+
+const isLessThan55Bytes = (buffer: Buffer, currentPosition: number): boolean => {
+  return buffer[currentPosition] >= OFFSET_SHORT_LIST && buffer[currentPosition] <= OFFSET_LONG_LIST
+}
+
+const isItemBiggerThan55Bytes = (buffer: Buffer, currentPosition: number): boolean => {
+  return buffer[currentPosition] > OFFSET_LONG && buffer[currentPosition] < OFFSET_SHORT_LIST
+}
+
+const isItemLessThan55Bytes = (buffer: Buffer, currentPosition: number): boolean => {
+  return buffer[currentPosition] > OFFSET_SHORT && buffer[currentPosition] <= OFFSET_LONG
+}
+
+const isNullItem = (buffer: Buffer, currentPosition: number): boolean => {
+  return buffer[currentPosition] === OFFSET_SHORT
+}
+
+const isSingleByteItem = (buffer: Buffer, currentPosition: number): boolean => {
+  return buffer[currentPosition] < OFFSET_SHORT
+}
+
 const isArrayOfType = <T>(elemGuard: (x: any) => x is T) => (arr: any[]): arr is Array<T> => arr.every(elemGuard)
 export const isInstanceOf = <T>(ctor: new (...args: any) => T) => (x: any): x is T => x instanceof ctor
 
@@ -52,6 +79,15 @@ export const utils = {
     isNullOrZeroLength,
     isSingleZero,
     isSingleLessThanOffsetShort,
-    byteNumShifted
+    byteNumShifted,
+    populateBuffer,
+    setFirst,
+    populateLenBytes,
+    isBiggerThan55Bytes,
+    isLessThan55Bytes,
+    isItemBiggerThan55Bytes,
+    isItemLessThan55Bytes,
+    isNullItem,
+    isSingleByteItem
   }
 }

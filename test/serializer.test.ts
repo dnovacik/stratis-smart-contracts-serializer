@@ -1,4 +1,4 @@
-import { BasicTypes } from '../src/utils'
+import { BasicTypes } from './../src/models'
 import { deserialize, serialize } from './../src/serializer'
 import testdata from './test-data'
 
